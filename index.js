@@ -4,27 +4,36 @@ const dboper = require('./operations');
 const url = 'mongodb://localhost:27017/';
 const dbname = 'confusion';
 
-MongoClient.connect(url, (err, client) => {
+MongoClient.connect(url, {useNewUrlParser: true})
+.then((client) => {
 
-  assert.equal(err, null);
+  // assert.equal(err, null);
   console.log('Connection Established!');
   const db = client.db(dbname);
 
-  dboper.insertDocument(db, { name: "vadonut", description: 'Test'}, 'dishes', (result) => {
+  dboper.insertDocument(db, { name: "vadonut", description: 'Test'}, 'dishes')
+  .then((result) => {
     console.log('Insert Document:\n', result.ops);
-
-    dboper.findDocuments(db, 'dishes', (docs) => {
+    return dboper.findDocuments(db, 'dishes');
+})
+  .then((docs) => {
       console.log('found documents:\n', docs);
-      dboper.updateDocument(db, {name: "vadonut"}, { description: "updatesd test"}, 'dishes', (result) => {
+      return dboper.updateDocument(db, {name: "vadonut"}, { description: "updatesd test"}, 'dishes')
+    })
+  .then((result) => {
         console.log('Updated Documents:\n', result.result);
-        dboper.findDocuments(db, 'dishes', (docs) => {
+        return dboper.findDocuments(db, 'dishes')
+      })
+      .then((docs) => {
           console.log('found documents:\n', docs);
-          db.dropCollection('dishes', (result) => {
+          return db.dropCollection('dishes')
+        })
+        .then((result) => {
             console.log('Dropped Collection:', result);
-            client.close();
+            return client.close();
+          })
+          .catch((err) => {
+            console.log(err);
           });
-        });
-      });
-    });
-  });
-});
+})
+.catch((err) => console.log(err));
